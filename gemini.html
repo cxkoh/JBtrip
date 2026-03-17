@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NUS Block Comm Bonding | JB Day Trip</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            /* Light Mode Glassmorphism Theme */
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --accent: #ff007f;
+            --accent-light: rgba(255, 0, 127, 0.1);
+            --success: #38a169;
+            --bg-gradient-1: #e0c3fc;
+            --bg-gradient-2: #8ec5fc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            /* Light, breezy daytime gradient */
+            background: linear-gradient(-45deg, #fdfbfb, #ebedee, var(--bg-gradient-2), #e0c3fc);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism Core */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.85); /* Slightly more opaque for readability */
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #ff007f, #ff758c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        header p { font-size: 1.1rem; color: var(--text-muted); font-weight: 500; }
+
+        .stats-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+            color: var(--text-main);
+        }
+        
+        .stat-badge:hover { transform: translateY(-3px); border-color: var(--accent); }
+        .stat-badge i { color: var(--accent); }
+
+        /* Main Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 420px 1fr 320px;
+            gap: 25px;
+            max-width: 1600px;
+            margin: 0 auto;
+            height: calc(100vh - 220px);
+            min-height: 700px;
+        }
+
+        /* Column 1: Itinerary List */
+        .itinerary-container {
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .itinerary-card {
+            padding: 20px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+
+        .itinerary-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; height: 100%; width: 4px;
+            background: var(--accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 16px 0 0 16px;
+        }
+
+        .itinerary-card:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateX(5px);
+        }
+
+        .itinerary-card.active {
+            background: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px var(--accent-light);
+            transform: scale(1.02) translateX(5px);
+        }
+
+        .itinerary-card.active::before { opacity: 1; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .time-badge {
+            background: linear-gradient(135deg, #ff007f, #ff758c);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .card-type { font-size: 1.2rem; color: var(--accent); }
+        .card-title { font-size: 1.2rem; margin-bottom: 8px; font-weight: 700; color: var(--text-main); }
+        .card-desc { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
+
+        /* Granular Content & Map Embed (Hidden by default) */
+        .expanded-content {
+            display: none;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed rgba(0,0,0,0.1);
+            animation: slideDown 0.4s ease;
+        }
+
+        .itinerary-card.active .expanded-content { display: block; }
+
+        .granular-list {
+            list-style: none;
+            margin-bottom: 15px;
+        }
+
+        .granular-list li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .granular-list li::before {
+            content: '\f105'; /* FontAwesome angle-right */
+            font-family: 'FontAwesome';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .gmap-embed {
+            width: 100%;
+            height: 180px;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Column 2: Map */
+        .map-container {
+            border-radius: 24px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: rgba(255,255,255,0.8);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+            border-radius: 18px;
+            z-index: 1;
+        }
+
+        /* Custom Map Marker styles */
+        .custom-marker {
+            background: linear-gradient(135deg, #ff007f, #ff758c);
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease;
+        }
+        .custom-marker.pulse {
+            transform: scale(1.3);
+            box-shadow: 0 0 0 6px rgba(255, 0, 127, 0.3);
+        }
+
+        /* Leaflet Popup Styling - Light Mode */
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: #ffffff !important;
+            color: var(--text-main) !important;
+            border: 1px solid rgba(0,0,0,0.1) !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+            border-radius: 12px !important;
+        }
+        .leaflet-popup-content { margin: 15px !important; line-height: 1.4 !important; }
+        .leaflet-popup-content b { color: var(--accent); font-size: 1.1em; display:block; margin-bottom:4px; }
+
+        /* Column 3: Widgets */
+        .widgets-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .widget {
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+
+        .widget h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .budget-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+        .budget-total { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1); font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+
+        .check-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease; font-weight: 500; }
+        .check-item:hover { color: var(--accent); }
+        .check-item.done { text-decoration: line-through; color: #a0aec0; }
+        .check-box { width: 22px; height: 22px; border: 2px solid #cbd5e0; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+        .check-item.done .check-box { background: var(--success); border-color: var(--success); }
+        .check-item.done .check-box::after { content: '\f00c'; font-family: 'FontAwesome'; font-size: 12px; color: white; }
+
+        .weather-info { display: flex; align-items: center; justify-content: space-between; }
+        .weather-temp { font-size: 2.5rem; font-weight: 700; color: var(--text-main); }
+        .weather-desc { font-size: 0.95rem; color: var(--text-muted); text-align: right; font-weight: 500; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard { grid-template-columns: 400px 1fr; }
+            .widgets-container { display: none; }
+        }
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; height: auto; }
+            .map-container { height: 450px; order: -1; }
+            .itinerary-container { height: auto; overflow: visible;}
+            .widgets-container { display: flex; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="glass">
+        <h1>NUS Block Comm Bonding 🚀</h1>
+        <p>Johor Bahru Epic Day Trip Itinerary</p>
+        <div class="stats-container">
+            <div class="stat-badge"><i class="fa-regular fa-calendar"></i> 2nd April</div>
+            <div class="stat-badge"><i class="fa-solid fa-users"></i> 20 Pax</div>
+            <div class="stat-badge"><i class="fa-solid fa-clock"></i> 09:00 AM Start</div>
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <div class="itinerary-container glass" id="itinerary-list"></div>
+
+        <div class="map-container glass">
+            <div id="map"></div>
+        </div>
+
+        <div class="widgets-container glass" style="padding: 20px;">
+            <div class="widget">
+                <h3><i class="fa-solid fa-cloud-sun" style="color:#f6ad55;"></i> JB Forecast</h3>
+                <div class="weather-info">
+                    <div class="weather-temp">32°</div>
+                    <div class="weather-desc">Partly Cloudy<br><span style="font-size:0.8rem; color:var(--accent);">20% Rain Chance</span></div>
+                </div>
+            </div>
+            <div class="widget">
+                <h3><i class="fa-solid fa-wallet" style="color:var(--accent);"></i> Est. Budget (Per Pax)</h3>
+                <div id="budget-list"></div>
+                <div class="budget-total"><span>Total:</span><span id="budget-total-val">RM 0</span></div>
+            </div>
+            <div class="widget" style="flex-grow: 1;">
+                <h3><i class="fa-solid fa-clipboard-check" style="color:var(--success);"></i> Essentials Check</h3>
+                <div class="check-item" onclick="this.classList.toggle('done')"><div class="check-box"></div> Passport (>6mo valid)</div>
+                <div class="check-item" onclick="this.classList.toggle('done')"><div class="check-box"></div> MDAC / SG Arrival Card</div>
+                <div class="check-item" onclick="this.classList.toggle('done')"><div class="check-box"></div> Powerbank & Cable</div>
+                <div class="check-item" onclick="this.classList.toggle('done')"><div class="check-box"></div> Ringgit Cash (~RM150)</div>
+                <div class="check-item" onclick="this.classList.toggle('done')"><div class="check-box"></div> Data Roaming Active</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Data with Granular Plans & Google Map Search Queries
+        const itineraryData = [
+            { 
+                id: 1, time: "09:00 AM", title: "Woodlands Checkpoint", 
+                desc: "Meetup & Border Crossing. Ensure passports are ready.", icon: "fa-solid fa-passport", 
+                lat: 1.4468, lng: 103.7686, type: "Logistics", cost: 0,
+                searchQuery: "Woodlands Checkpoint Singapore",
+                granular: [
+                    "09:00 AM - Gather & Roll Call",
+                    "09:15 AM - Group headcount & brief",
+                    "09:30 AM - Proceed through SG Immigration",
+                    "10:00 AM - Clear MY Immigration"
+                ]
+            },
+            { 
+                id: 2, time: "10:30 AM", title: "Gim Cheng Dim Sum", 
+                desc: "Classic JB old-school Dim Sum. Large seating area for 20 pax.", icon: "fa-solid fa-dumpling", 
+                lat: 1.5160, lng: 103.7662, type: "Breakfast", cost: 25,
+                searchQuery: "Gim Cheng Dim Sum Restaurant Johor Bahru",
+                granular: [
+                    "10:30 AM - Arrive and secure 2-3 large tables",
+                    "10:45 AM - Order signature Har Gow and Custard buns",
+                    "11:45 AM - Consolidate bill & group payment"
+                ]
+            },
+            { 
+                id: 3, time: "12:30 PM", title: "RUD Karting", 
+                desc: "Adrenaline rush! Perfect for large groups to race each other.", icon: "fa-solid fa-flag-checkered", 
+                lat: 1.5714, lng: 103.7548, type: "Activity", cost: 55,
+                searchQuery: "RUD Karting Medini Johor",
+                granular: [
+                    "12:30 PM - Safety briefing & helmet fitting",
+                    "01:00 PM - Race Session 1 (Heats)",
+                    "01:30 PM - Race Session 2 (Finals)",
+                    "02:00 PM - Podium photos & cool down"
+                ]
+            },
+            { 
+                id: 4, time: "03:00 PM", title: "Paradigm Mall", 
+                desc: "Cool down indoors. Split into smaller groups to explore.", icon: "fa-solid fa-store", 
+                lat: 1.5152, lng: 103.6815, type: "Leisure", cost: 20,
+                searchQuery: "Paradigm Mall Johor Bahru",
+                granular: [
+                    "03:00 PM - Drop off at Paradigm Mall",
+                    "03:15 PM - Split into smaller sub-groups",
+                    "03:30 PM - Free time: Ice skating, shopping",
+                    "05:15 PM - Meet up at Main Entrance"
+                ]
+            },
+            { 
+                id: 5, time: "05:30 PM", title: "Hiap Joo & Jalan Dhoby", 
+                desc: "Heritage street walk. Grab famous banana cake & take photos.", icon: "fa-solid fa-camera", 
+                lat: 1.4566, lng: 103.7623, type: "Sightseeing", cost: 12,
+                searchQuery: "Hiap Joo Bakery & Biscuit Factory Johor",
+                granular: [
+                    "05:30 PM - Walk down Jalan Dhoby",
+                    "05:45 PM - Queue for Hiap Joo Banana Cake",
+                    "06:15 PM - Cafe hopping/photos along heritage street"
+                ]
+            },
+            { 
+                id: 6, time: "07:30 PM", title: "Grand Bayview Seafood", 
+                desc: "Epic seafood feast by the Danga Bay waterfront.", icon: "fa-solid fa-fish", 
+                lat: 1.4705, lng: 103.7259, type: "Dinner", cost: 65,
+                searchQuery: "Grand Bayview Seafood Restaurant Danga Bay",
+                granular: [
+                    "07:30 PM - Settle down at reserved tables",
+                    "07:45 PM - Order Salted Egg Crab & Cereal Prawns",
+                    "08:45 PM - Wrap up dinner & sunset group photos"
+                ]
+            },
+            { 
+                id: 7, time: "09:30 PM", title: "Return to NUS", 
+                desc: "Gather the pack and head back to the checkpoint.", icon: "fa-solid fa-bus-simple", 
+                lat: 1.4630, lng: 103.7645, type: "Logistics", cost: 0,
+                searchQuery: "Johor Bahru Checkpoint CIQ",
+                granular: [
+                    "09:30 PM - Final headcount at JB Sentral",
+                    "09:45 PM - Clear MY/SG Immigration",
+                    "10:45 PM - Arrive safely back at NUS"
+                ]
+            }
+        ];
+
+        // Init Map - Light Mode Satellite
+        const map = L.map('map', { zoomControl: false }).setView([1.51, 103.74], 12);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        
+        // Esri World Imagery (High-Res Satellite View)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            maxZoom: 18 
+        }).addTo(map);
+
+        const markers = {};
+        const latLngs = []; 
+        let totalBudget = 0;
+
+        const itineraryList = document.getElementById('itinerary-list');
+        const budgetList = document.getElementById('budget-list');
+
+        // Build UI
+        itineraryData.forEach((item, index) => {
+            const stepNumber = index + 1;
+            latLngs.push([item.lat, item.lng]);
+
+            if (item.cost > 0) {
+                totalBudget += item.cost;
+                budgetList.innerHTML += `<div class="budget-item"><span>${item.type}</span><span>RM ${item.cost}</span></div>`;
+            }
+
+            const customIcon = L.divIcon({
+                className: '',
+                html: `<div class="custom-marker" id="marker-${item.id}">${stepNumber}</div>`,
+                iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -15]
+            });
+
+            const marker = L.marker([item.lat, item.lng], {icon: customIcon}).addTo(map);
+            marker.bindPopup(`<b>Step ${stepNumber}: ${item.title}</b><span style="color:var(--text-muted); font-size: 0.9em;">${item.time}</span>`);
+            markers[item.id] = marker;
+
+            const card = document.createElement('div');
+            card.className = 'itinerary-card';
+            card.style.animation = `fadeIn 0.5s ease forwards ${index * 0.1}s`;
+            card.style.opacity = '0';
+            
+            // Generate Granular List HTML
+            let granularHtml = '<ul class="granular-list">';
+            item.granular.forEach(point => {
+                granularHtml += `<li>${point}</li>`;
+            });
+            granularHtml += '</ul>';
+
+            // Google Maps Embed URL
+            const gmapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(item.searchQuery)}&t=m&z=15&output=embed`;
+
+            card.innerHTML = `
+                <div class="card-header"><span class="time-badge">${item.time}</span><i class="${item.icon} card-type"></i></div>
+                <h3 class="card-title">${stepNumber}. ${item.title}</h3>
+                <p class="card-desc">${item.desc}</p>
+                <div class="expanded-content">
+                    ${granularHtml}
+                    <iframe class="gmap-embed" loading="lazy" src="${gmapUrl}"></iframe>
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                // Remove active from all, add to clicked
+                document.querySelectorAll('.itinerary-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+
+                // Update Map markers
+                document.querySelectorAll('.custom-marker').forEach(m => m.classList.remove('pulse'));
+                const mapMarker = document.getElementById(`marker-${item.id}`);
+                if(mapMarker) mapMarker.classList.add('pulse');
+
+                // Fly to location
+                map.flyTo([item.lat, item.lng], 15, { duration: 1.5 });
+                setTimeout(() => { markers[item.id].openPopup(); }, 300);
+                
+                // Delay scrolling slightly to allow the expanded content to render its height
+                setTimeout(() => {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150);
+            });
+
+            itineraryList.appendChild(card);
+        });
+
+        // Add CSS keyframes dynamically
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(20px); } }`;
+        document.head.appendChild(styleSheet);
+
+        // Update Total Budget
+        document.getElementById('budget-total-val').innerText = `RM ${totalBudget}`;
+
+        // Draw Route Line (Vibrant pink so it shows up beautifully on Satellite)
+        const routeLine = L.polyline(latLngs, { color: '#ff007f', weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(map);
+
+        // Initialization
+        setTimeout(() => {
+            map.invalidateSize();
+            map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+
+            const firstCard = document.querySelector('.itinerary-card');
+            if (firstCard) firstCard.classList.add('active');
+            
+            const firstId = itineraryData[0].id;
+            markers[firstId].openPopup();
+            
+            const firstMarker = document.getElementById(`marker-${firstId}`);
+            if(firstMarker) firstMarker.classList.add('pulse');
+        }, 600);
+
+    </script>
+</body>
+</html>
