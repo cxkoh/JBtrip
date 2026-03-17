@@ -72,7 +72,7 @@
             margin-bottom: 25px;
             position: relative;
             overflow: hidden;
-            background: rgba(255, 255, 255, 0.85); /* Slightly more opaque for readability */
+            background: rgba(255, 255, 255, 0.85);
         }
 
         header h1 {
@@ -189,7 +189,7 @@
         .card-title { font-size: 1.2rem; margin-bottom: 8px; font-weight: 700; color: var(--text-main); }
         .card-desc { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
 
-        /* Granular Content & Map Embed (Hidden by default) */
+        /* Granular Content & Map Embed */
         .expanded-content {
             display: none;
             margin-top: 20px;
@@ -215,7 +215,7 @@
         }
 
         .granular-list li::before {
-            content: '\f105'; /* FontAwesome angle-right */
+            content: '\f105';
             font-family: 'FontAwesome';
             position: absolute;
             left: 0;
@@ -229,6 +229,7 @@
             border: none;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background-color: #f8f9fa;
         }
 
         @keyframes slideDown {
@@ -275,7 +276,7 @@
             box-shadow: 0 0 0 6px rgba(255, 0, 127, 0.3);
         }
 
-        /* Leaflet Popup Styling - Light Mode */
+        /* Leaflet Popup Styling */
         .leaflet-popup-content-wrapper, .leaflet-popup-tip {
             background: #ffffff !important;
             color: var(--text-main) !important;
@@ -385,13 +386,14 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Data with Granular Plans & Google Map Search Queries
+        // Data with Granular Plans & Hardcoded Google Map Links
+        // You can easily change the 'gmapUrl' string to any valid embed link if needed!
         const itineraryData = [
             { 
                 id: 1, time: "09:00 AM", title: "Woodlands Checkpoint", 
                 desc: "Meetup & Border Crossing. Ensure passports are ready.", icon: "fa-solid fa-passport", 
                 lat: 1.4468, lng: 103.7686, type: "Logistics", cost: 0,
-                searchQuery: "Woodlands Checkpoint Singapore",
+                gmapUrl: "https://maps.google.com/maps?q=Woodlands+Checkpoint+Singapore&t=&z=15&ie=UTF8&iwloc=&output=embed",
                 granular: [
                     "09:00 AM - Gather & Roll Call",
                     "09:15 AM - Group headcount & brief",
@@ -403,7 +405,7 @@
                 id: 2, time: "10:30 AM", title: "Gim Cheng Dim Sum", 
                 desc: "Classic JB old-school Dim Sum. Large seating area for 20 pax.", icon: "fa-solid fa-dumpling", 
                 lat: 1.5160, lng: 103.7662, type: "Breakfast", cost: 25,
-                searchQuery: "Gim Cheng Dim Sum Restaurant Johor Bahru",
+                gmapUrl: "https://maps.google.com/maps?q=Gim+Cheng+Dim+Sum+Restaurant+Johor+Bahru&t=&z=15&ie=UTF8&iwloc=&output=embed",
                 granular: [
                     "10:30 AM - Arrive and secure 2-3 large tables",
                     "10:45 AM - Order signature Har Gow and Custard buns",
@@ -414,11 +416,10 @@
                 id: 3, time: "12:30 PM", title: "RUD Karting", 
                 desc: "Adrenaline rush! Perfect for large groups to race each other.", icon: "fa-solid fa-flag-checkered", 
                 lat: 1.5714, lng: 103.7548, type: "Activity", cost: 55,
-                searchQuery: "RUD Karting Medini Johor",
+                gmapUrl: "https://maps.google.com/maps?q=RUD+Karting+Medini+Johor&t=&z=15&ie=UTF8&iwloc=&output=embed",
                 granular: [
                     "12:30 PM - Safety briefing & helmet fitting",
-                    "01:00 PM - Race Session 1 (Heats)",
-                    "01:30 PM - Race Session 2 (Finals)",
+                    "01:00 PM - Race Session",
                     "02:00 PM - Podium photos & cool down"
                 ]
             },
@@ -426,7 +427,7 @@
                 id: 4, time: "03:00 PM", title: "Paradigm Mall", 
                 desc: "Cool down indoors. Split into smaller groups to explore.", icon: "fa-solid fa-store", 
                 lat: 1.5152, lng: 103.6815, type: "Leisure", cost: 20,
-                searchQuery: "Paradigm Mall Johor Bahru",
+                gmapUrl: "https://maps.google.com/maps?q=Paradigm+Mall+Johor+Bahru&t=&z=15&ie=UTF8&iwloc=&output=embed",
                 granular: [
                     "03:00 PM - Drop off at Paradigm Mall",
                     "03:15 PM - Split into smaller sub-groups",
@@ -438,7 +439,7 @@
                 id: 5, time: "05:30 PM", title: "Hiap Joo & Jalan Dhoby", 
                 desc: "Heritage street walk. Grab famous banana cake & take photos.", icon: "fa-solid fa-camera", 
                 lat: 1.4566, lng: 103.7623, type: "Sightseeing", cost: 12,
-                searchQuery: "Hiap Joo Bakery & Biscuit Factory Johor",
+                gmapUrl: "https://maps.google.com/maps?q=Hiap+Joo+Bakery+Johor&t=&z=15&ie=UTF8&iwloc=&output=embed",
                 granular: [
                     "05:30 PM - Walk down Jalan Dhoby",
                     "05:45 PM - Queue for Hiap Joo Banana Cake",
@@ -449,7 +450,7 @@
                 id: 6, time: "07:30 PM", title: "Grand Bayview Seafood", 
                 desc: "Epic seafood feast by the Danga Bay waterfront.", icon: "fa-solid fa-fish", 
                 lat: 1.4705, lng: 103.7259, type: "Dinner", cost: 65,
-                searchQuery: "Grand Bayview Seafood Restaurant Danga Bay",
+                gmapUrl: "https://maps.google.com/maps?q=Grand+Bayview+Seafood+Restaurant+Danga+Bay&t=&z=15&ie=UTF8&iwloc=&output=embed",
                 granular: [
                     "07:30 PM - Settle down at reserved tables",
                     "07:45 PM - Order Salted Egg Crab & Cereal Prawns",
@@ -460,7 +461,7 @@
                 id: 7, time: "09:30 PM", title: "Return to NUS", 
                 desc: "Gather the pack and head back to the checkpoint.", icon: "fa-solid fa-bus-simple", 
                 lat: 1.4630, lng: 103.7645, type: "Logistics", cost: 0,
-                searchQuery: "Johor Bahru Checkpoint CIQ",
+                gmapUrl: "https://maps.google.com/maps?q=Johor+Bahru+Checkpoint+CIQ&t=&z=15&ie=UTF8&iwloc=&output=embed",
                 granular: [
                     "09:30 PM - Final headcount at JB Sentral",
                     "09:45 PM - Clear MY/SG Immigration",
@@ -475,7 +476,7 @@
         
         // Esri World Imagery (High-Res Satellite View)
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            attribution: 'Tiles © Esri',
             maxZoom: 18 
         }).addTo(map);
 
@@ -518,16 +519,13 @@
             });
             granularHtml += '</ul>';
 
-            // Google Maps Embed URL
-            const gmapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(item.searchQuery)}&t=m&z=15&output=embed`;
-
             card.innerHTML = `
                 <div class="card-header"><span class="time-badge">${item.time}</span><i class="${item.icon} card-type"></i></div>
                 <h3 class="card-title">${stepNumber}. ${item.title}</h3>
                 <p class="card-desc">${item.desc}</p>
                 <div class="expanded-content">
                     ${granularHtml}
-                    <iframe class="gmap-embed" loading="lazy" src="${gmapUrl}"></iframe>
+                    <iframe class="gmap-embed" loading="lazy" src="${item.gmapUrl}"></iframe>
                 </div>
             `;
 
@@ -562,7 +560,7 @@
         // Update Total Budget
         document.getElementById('budget-total-val').innerText = `RM ${totalBudget}`;
 
-        // Draw Route Line (Vibrant pink so it shows up beautifully on Satellite)
+        // Draw Route Line
         const routeLine = L.polyline(latLngs, { color: '#ff007f', weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(map);
 
         // Initialization
